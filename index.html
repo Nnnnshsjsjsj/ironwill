@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>IRON WILL</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="IRON WILL">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000000;
+    --fg:#ffffff;
+    --soul:#ff0000;
+    --pick:#ffff00;
+    --dim:#8a8a8a;
+    --smoke:#8f8f8f;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:var(--bg);
+    color:var(--fg);
+    font-family:'Press Start 2P',monospace;
+    display:flex;flex-direction:column;
+    padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 16px);
+    overflow:hidden;
+    image-rendering:pixelated;
+    user-select:none;-webkit-user-select:none;
+  }
+  .screen{display:none;flex:1;flex-direction:column}
+  .screen.on{display:flex}
+
+  .dlg{border:4px solid var(--fg);padding:18px 14px;position:relative;background:var(--bg)}
+  .dlg::after{content:'';position:absolute;inset:4px;border:2px solid var(--fg);pointer-events:none}
+  .txt{font-size:11px;line-height:2;letter-spacing:1px;min-height:88px}
+  .txt .cur{display:inline-block;width:8px;height:12px;background:var(--fg);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  .heart{
+    width:14px;height:12px;display:inline-block;flex:0 0 auto;
+    background:conic-gradient(var(--soul) 0 0);
+    clip-path:polygon(15% 0,42% 0,42% 15%,58% 15%,58% 0,85% 0,100% 15%,100% 45%,85% 60%,70% 75%,58% 88%,50% 100%,42% 88%,30% 75%,15% 60%,0 45%,0 15%);
+  }
+  .beat{animation:beat 1.1s infinite}
+  @keyframes beat{0%,100%{transform:scale(1)}12%{transform:scale(1.28)}24%{transform:scale(1)}36%{transform:scale(1.18)}48%{transform:scale(1)}}
+  @media (prefers-reduced-motion:reduce){.beat{animation:none}.txt .cur{animation:none}}
+
+  .opt{
+    display:flex;align-items:center;gap:14px;
+    font-size:14px;letter-spacing:2px;
+    padding:16px 8px;cursor:pointer;color:var(--fg);
+    background:none;border:none;font-family:inherit;text-align:left;width:100%;
+  }
+  .opt .heart{visibility:hidden}
+  .opt.sel{color:var(--pick)}
+  .opt.sel .heart{visibility:visible}
+  .opt:active{transform:translateX(2px)}
+
+  /* ---------- check-in ---------- */
+  #checkin{justify-content:center;gap:30px}
+  #checkin .step{font-size:8px;color:var(--dim);letter-spacing:3px;text-align:center}
+  #checkin .q{font-size:14px;line-height:2.1;text-align:center;letter-spacing:1px;min-height:88px;display:flex;align-items:center;justify-content:center}
+  #checkin .opts{display:flex;flex-direction:column;gap:4px;align-self:center;min-width:210px}
+
+  /* ---------- main ---------- */
+  #main{justify-content:space-between;gap:12px}
+  .hud{display:flex;justify-content:space-between;align-items:center;font-size:8px;color:var(--dim);letter-spacing:2px}
+  .hud button{background:none;border:2px solid var(--dim);color:var(--dim);font-family:inherit;font-size:8px;padding:8px 10px;letter-spacing:2px;cursor:pointer}
+  .counters{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;min-height:0}
+  .counters .heart{width:24px;height:20px}
+  .track{display:flex;align-items:baseline;gap:18px}
+  .track .num{font-size:clamp(46px,17vw,76px);line-height:1;text-shadow:5px 5px 0 #3a0000}
+  .track .side{display:flex;flex-direction:column;gap:8px}
+  .track .name{font-size:10px;letter-spacing:2px}
+  .track .sub{font-size:7px;color:var(--dim);letter-spacing:1px;line-height:1.8}
+  .lv{font-size:9px;color:var(--pick);letter-spacing:2px;text-align:center;line-height:2}
+  .nav{display:flex;gap:10px}
+  .nav button{
+    flex:1;background:none;border:4px solid var(--fg);color:var(--fg);
+    font-family:inherit;font-size:9px;letter-spacing:2px;padding:16px 6px;cursor:pointer;
+  }
+  .nav button:active{background:var(--fg);color:var(--bg)}
+
+  /* ---------- mind ---------- */
+  #mind{justify-content:space-between;gap:14px}
+  #mind .head{font-size:13px;letter-spacing:2px;display:flex;align-items:center;gap:12px}
+  #mind .body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:0}
+  .stat{font-size:8px;color:var(--dim);line-height:2;letter-spacing:1px}
+</style>
+</head>
+<body>
+
+<!-- ======== CHECK-IN ======== -->
+<section id="checkin" class="screen">
+  <p class="step" id="stepLbl">CHECK 1/3</p>
+  <p class="q" id="qTxt"></p>
+  <div class="opts">
+    <button class="opt sel" id="optNo"><span class="heart"></span>NO</button>
+    <button class="opt" id="optYes"><span class="heart"></span>YES</button>
+  </div>
+</section>
+
+<!-- ======== MAIN ======== -->
+<section id="main" class="screen">
+  <div class="hud">
+    <span id="dateLbl"></span>
+    <button id="sndBtn">SND ON</button>
+  </div>
+  <div class="counters">
+    <span class="heart beat"></span>
+    <div class="track">
+      <div class="num" id="numDrink">0</div>
+      <div class="side">
+        <div class="name">SOBER</div>
+        <div class="sub">DAYS WITHOUT<br>ALCOHOL</div>
+      </div>
+    </div>
+    <div class="track">
+      <div class="num" id="numSmoke" style="color:var(--smoke);text-shadow:5px 5px 0 #222">0</div>
+      <div class="side">
+        <div class="name" style="color:var(--smoke)">CLEAN</div>
+        <div class="sub">DAYS WITHOUT<br>CIGARETTES</div>
+      </div>
+    </div>
+    <div class="lv" id="lv"></div>
+  </div>
+  <div class="dlg">
+    <p class="txt" id="quote"></p>
+  </div>
+  <div class="nav">
+    <button id="toMind">IRON MIND</button>
+    <button id="newQuote">NEW QUOTE</button>
+  </div>
+</section>
+
+<!-- ======== IRON MIND ======== -->
+<section id="mind" class="screen">
+  <div class="head"><span class="heart"></span>IRON MIND</div>
+  <div class="body">
+    <div class="dlg">
+      <p class="txt" id="mindTxt"></p>
+    </div>
+    <p class="stat" id="mindStat"></p>
+  </div>
+  <div class="nav">
+    <button id="another">TALK TO ME</button>
+    <button id="back">BACK</button>
+  </div>
+</section>
+
+<script>
+/* ================= DATA ================= */
+// Original quotes. Hard register, profanity aimed at excuses — never at you.
+const QUOTES = [
+  "* NOBODY GIVES A SHIT ABOUT YOUR EXCUSES. GOOD. THAT'S FREEDOM. NOW WORK.",
+  "* THE WORLD IS NOT FAIR. CRYING ABOUT IT IS A HOBBY FOR LOSERS. ADAPTING IS A JOB FOR MEN.",
+  "* НИКОМУ НЕ ИНТЕРЕСНО, ПОЧЕМУ ТЫ НЕ СМОГ. ВСЕМ ИНТЕРЕСНО, ЧТО ТЫ СДЕЛАЛ.",
+  "* YOUR COMFORT ZONE IS A DAMN COFFIN WITH WIFI. CLIMB OUT.",
+  "* A CIGARETTE IS YOU PAYING A CORPORATION TO SLOWLY KILL YOU. THAT'S NOT REBELLION. THAT'S BEING A CUSTOMER.",
+  "* ХВАТИТ НЫТЬ. НОЙ В СПОРТЗАЛЕ, ПОД ШТАНГОЙ. ТАМ ЭТО ХОТЯ БЫ ПРИНОСИТ РЕЗУЛЬТАТ.",
+  "* MODERN MEN ARE SOFT BECAUSE EVERYTHING IS EASY. BE THE EXCEPTION EVERYTHING FEARS.",
+  "* NICOTINE ISN'T STRESS RELIEF. IT'S A LEASH. AND YOU'RE NOT A DAMN PET.",
+  "* ТВОЙ ДЕД В ТВОИ ГОДЫ НЕ ЖДАЛ МОТИВАЦИЮ. ОН ВСТАВАЛ И ДЕЛАЛ. ГЕНЫ ТЕ ЖЕ. ОТГОВОРКИ НОВЫЕ.",
+  "* EVERY DRINK, EVERY SMOKE IS A VOTE FOR THE WEAK VERSION OF YOU. STOP CAMPAIGNING FOR HIM.",
+  "* SOCIETY SELLS YOU POISON, THEN SELLS YOU THE CURE. OPT THE HELL OUT OF BOTH.",
+  "* БОЛЬШИНСТВО ЛЮДЕЙ — ЗРИТЕЛИ СВОЕЙ ЖИЗНИ. КУПИЛИ ПОПКОРН, ПИВО И СМОТРЯТ. ВЫЙДИ НА ПОЛЕ.",
+  "* HARD TIMES ARE A FILTER. MOST MEN CLOG IT. YOU PASS THROUGH.",
+  "* YOU THINK DISCIPLINE IS HARD? TRY EXPLAINING A WASTED LIFE TO YOURSELF AT 60.",
+  "* СИГАРЕТА НЕ ДЕЛАЕТ ТЕБЯ БРУТАЛЬНЫМ. ОНА ДЕЛАЕТ ТЕБЯ ДОЛЖНИКОМ ТАБАЧНОЙ КОМПАНИИ.",
+  "* AVERAGE IS THE MOST CROWDED PLACE ON EARTH. GET THE HELL OUT OF THERE.",
+  "* NO ONE IS COMING. NO REFUNDS ON WASTED YEARS. THE ONLY EXIT IS THROUGH WORK.",
+  "* ПОКА ТЫ ДУМАЕШЬ 'С ПОНЕДЕЛЬНИКА' — КТО-ТО УЖЕ ТРЕТИЙ ГОД ПАШЕТ. ОН И ЗАБЕРЁТ ВСЁ.",
+  "* WEAKNESS IS A CHOICE YOU MAKE EVERY DAY IN SMALL DOSES. SO IS STRENGTH. SAME PRICE.",
+  "* THE BOTTLE AND THE PACK ARE TAXES ON MEN WHO GAVE UP. YOU'RE DONE PAYING.",
+  "* УДОБНЫЙ МУЖЧИНА НИКОМУ НЕ НУЖЕН, ДАЖЕ СЕБЕ. БУДЬ РЕЗУЛЬТАТИВНЫМ, А НЕ УДОБНЫМ.",
+  "* YOUR FEELINGS DON'T PAY BILLS, DON'T BUILD MUSCLE, DON'T RAISE EMPIRES. ACTIONS DO.",
+  "* EVERYONE WANTS THE VIEW FROM THE TOP. ALMOST NOBODY WANTS THE DAMN CLIMB. THAT'S THE WHOLE SECRET.",
+  "* ЗАВИСИМОСТЬ — ЭТО КОГДА НЕ ТЫ ПРИНИМАЕШЬ РЕШЕНИЯ, А ХИМИЯ. КТО В ДОМЕ ХОЗЯИН?",
+  "* SOFT CHOICES, HARD LIFE. HARD CHOICES, SOFT LIFE. PICK YOUR HARD.",
+  "* THEY CALL DISCIPLINE 'EXTREME' BECAUSE MEDIOCRITY IS THE RELIGION OF THE MASSES. BE A HERETIC.",
+  "* ТЕБЯ НИКТО НЕ СПАСЁТ. И СЛАВА БОГУ. СПАСАТЕЛЬ ИЗ ЗЕРКАЛА СПРАВИТСЯ ЛУЧШЕ.",
+  "* A MAN WITH NO VICES CONTROLLING HIM IS THE MOST DANGEROUS MAN IN THE ROOM.",
+  "* QUITTING POISON ISN'T SACRIFICE. IT'S TAKING BACK STOLEN PROPERTY: YOUR BRAIN.",
+  "* СЛАБОСТЬ ШЕПЧЕТ 'ОДИН РАЗ МОЖНО'. ДИСЦИПЛИНА ОТВЕЧАЕТ 'ПОШЛА К ЧЁРТУ'.",
+  "* THE MATRIX WANTS YOU DRUNK, HIGH, SEDATED AND SCROLLING. STAYING SHARP IS THE REAL REVOLT.",
+  "* DON'T TELL PEOPLE YOUR PLANS. SHOW THEM YOUR DAMN RESULTS.",
+  "* КАЖДОЕ УТРО БЕЗ ПОХМЕЛЬЯ И БЕЗ КАШЛЯ — ЭТО ТЫ ГРАБИШЬ СИСТЕМУ, КОТОРАЯ НА ТЕБЕ ЗАРАБАТЫВАЛА."
+];
+
+const MIND = [
+  "* FELT LONELY TODAY? LISTEN UP.\n* LONELINESS IS THE FORGE. EVERY GREAT MAN SPENT YEARS IN IT.\n* BUT A FORGE IS FOR VISITS, NOT FOR LIVING. CALL A BROTHER TONIGHT. THAT'S AN ORDER.",
+  "* CRAVING? GOOD. THAT'S THE OLD YOU BEGGING.\n* IT DIES IN 15 MINUTES.\n* 20 PUSH-UPS. COLD WATER ON YOUR FACE. WATCH IT RETREAT.",
+  "* ТЯЖЕЛО? ОТЛИЧНО. ЛЁГКОЙ БЫВАЕТ ТОЛЬКО ДОРОГА ВНИЗ.\n* ТЫ ИДЁШЬ ВВЕРХ, БРАТ. ДЫШИ И ШАГАЙ.",
+  "* CHECKING YOUR OWN HEAD ISN'T SOFT.\n* A GENERAL INSPECTS HIS WEAPONS. YOUR MIND IS THE MAIN ONE.\n* MAINTENANCE IS NOT WEAKNESS.",
+  "* ОДИНОЧЕСТВО — ЭТО СИГНАЛ, А НЕ ПРИГОВОР.\n* СИГНАЛ: НАЙДИ СВОЮ СТАЮ. СИЛЬНЫЕ ХОДЯТ СТАЯМИ.\n* НАПИШИ ДРУГУ. ПРЯМО СЕЙЧАС. НЕ ЗАВТРА.",
+  "* BAD DAY? WARRIORS HAVE BAD DAYS.\n* THEY JUST DON'T MAKE PERMANENT DECISIONS ON TEMPORARY EMOTIONS.\n* SLEEP. TRAIN. REPEAT.",
+  "* THE URGE TO SMOKE IS YOUR BRAIN ASKING FOR A JOB.\n* GIVE IT A REAL ONE: WALK, LIFT, BUILD, READ.\n* THE BEAST NEEDS WORK, NOT NICOTINE.",
+  "* ГОВОРИТЬ О ПРОБЛЕМАХ — НЕ СЛАБОСТЬ.\n* СЛАБОСТЬ — ЗАЛИВАТЬ ИХ, ЗАКУРИВАТЬ ИХ И ДЕЛАТЬ ВИД, ЧТО ИХ НЕТ.\n* МУЖИК РЕШАЕТ ПРОБЛЕМУ, А НЕ ПРЯЧЕТ.",
+  "* IF THE WEIGHT GETS TOO HEAVY, A SMART FIGHTER CALLS HIS CORNER.\n* A BROTHER, A COACH, A PROFESSIONAL.\n* THAT'S STRATEGY. RETREATING TO ATTACK AGAIN.",
+  "* YOU SURVIVED 100% OF YOUR WORST DAYS.\n* UNDEFEATED RECORD. DON'T RETIRE NOW.",
+  "* ОДИН ДЕНЬ ЗА РАЗ. ОДИН РАУНД ЗА РАЗ.\n* БОЙ НЕ ВЫИГРЫВАЮТ ЦЕЛИКОМ. ЕГО ВЫИГРЫВАЮТ ПО РАУНДАМ.\n* СЕГОДНЯ — ТВОЙ РАУНД.",
+  "* MILLIONS OF MEN ARE IN THIS SAME TRENCH TONIGHT.\n* SAYING NO TO THE GLASS. NO TO THE PACK.\n* YOU'RE NOT ALONE. YOU'RE IN AN ARMY."
+];
+
+const LONELY_REPLY = "* YOU SAID YOU FELT LONELY. RESPECT FOR SAYING IT — MOST MEN LIE.\n* LONELINESS IS TRAINING CAMP, NOT A LIFE SENTENCE.\n* TODAY'S MISSION: MESSAGE ONE PERSON. GYM. WALK. SUNLIGHT.\n* SOLDIERS CHECK ON SOLDIERS.";
+const RELAPSE_DRINK = "* YOU DRANK. SO YOU FELL. IT HAPPENS TO SOLDIERS.\n* COWARDS STAY DOWN AND CALL IT COMFORT. YOU WON'T.\n* COUNTER RESETS. THE WAR DOESN'T.\n* DAY ONE. MOVE.";
+const RELAPSE_SMOKE = "* YOU SMOKED. THE LEASH PULLED AND YOU FOLLOWED.\n* FINE. NOW YOU KNOW THE ENEMY'S STILL ALIVE.\n* COUNTER RESETS. YOUR LUNGS START HEALING IN 20 MINUTES.\n* BACK IN THE FIGHT.";
+const RELAPSE_BOTH = "* BOTTLE AND CIGARETTES IN ONE DAY. ROUGH ROUND.\n* BUT YOU SHOWED UP AND TOLD THE TRUTH. THAT'S THE SPINE OF A MAN.\n* BOTH COUNTERS RESET. YOUR SPINE DOESN'T.\n* DAY ONE. AGAIN. UNTIL IT STICKS.";
+const FIRST = "* SO YOU DECIDED TO FIGHT ON TWO FRONTS.\n* GOOD. DETERMINATION IS ALL YOU NEED.\n* COME BACK EVERY DAY. THREE QUESTIONS. ZERO LIES.";
+
+/* ================= STATE ================= */
+const KEY = 'ironwill.v1';
+const todayStr = () => { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e){ return {}; } };
+const save = s => localStorage.setItem(KEY, JSON.stringify(s));
+let S = load();
+let sndOn = S.snd !== false;
+
+function daysBetween(a,b){
+  const d1=new Date(a+'T00:00:00'), d2=new Date(b+'T00:00:00');
+  return Math.max(0, Math.round((d2-d1)/86400000));
+}
+const streakDrink = () => (!S.lastDrink && !S.start) ? 0 : daysBetween(S.lastDrink || S.start, todayStr());
+const streakSmoke = () => (!S.lastSmoke && !S.start) ? 0 : daysBetween(S.lastSmoke || S.start, todayStr());
+
+function level(n){
+  if(n>=365) return 'ABSOLUTE UNIT';
+  if(n>=180) return 'WARLORD';
+  if(n>=90)  return 'IRON MAN';
+  if(n>=30)  return 'DISCIPLINED';
+  if(n>=14)  return 'SOLDIER';
+  if(n>=7)   return 'FIGHTER';
+  if(n>=3)   return 'AWAKENED';
+  if(n>=1)   return 'RECRUIT';
+  return 'DAY ONE';
+}
+
+/* ================= SOUND ================= */
+let AC=null;
+function blip(){
+  if(!sndOn) return;
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.type='square'; o.frequency.value=440+Math.random()*120;
+    g.gain.setValueAtTime(0.03,AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+0.05);
+    o.connect(g); g.connect(AC.destination);
+    o.start(); o.stop(AC.currentTime+0.05);
+  }catch(e){}
+}
+
+/* ================= TYPEWRITER ================= */
+let typing=null;
+function type(el, text, done){
+  clearInterval(typing);
+  el.innerHTML='';
+  let i=0;
+  typing=setInterval(()=>{
+    if(i>=text.length){
+      clearInterval(typing);
+      el.innerHTML=el.textContent.replace(/\n/g,'<br>');
+      if(done) done();
+      return;
+    }
+    const ch=text[i++];
+    el.textContent+=ch;
+    el.innerHTML=el.textContent.replace(/\n/g,'<br>')+'<span class="cur"></span>';
+    if(ch!==' ' && ch!=='\n' && i%2===0) blip();
+  },26);
+}
+
+/* ================= SCREENS ================= */
+const scr = id => {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+};
+
+function quoteOfDay(){
+  const d=new Date();
+  const seed=d.getFullYear()*372+(d.getMonth()+1)*31+d.getDate();
+  return QUOTES[seed % QUOTES.length];
+}
+let quoteIdx=-1;
+
+/* ================= CHECK-IN FLOW ================= */
+const QUESTIONS = [
+  { key:'drink', text:'* DID YOU DRINK TODAY?' },
+  { key:'smoke', text:'* DID YOU SMOKE TODAY?' },
+  { key:'lonely', text:'* DID YOU FEEL LONELY TODAY?' }
+];
+let qIdx = 0;
+let answers = {};
+
+function showQuestion(){
+  document.getElementById('stepLbl').textContent = 'CHECK '+(qIdx+1)+'/'+QUESTIONS.length;
+  document.getElementById('qTxt').textContent = QUESTIONS[qIdx].text;
+  // reset selection to NO
+  document.getElementById('optYes').classList.remove('sel');
+  document.getElementById('optNo').classList.add('sel');
+  scr('checkin');
+}
+
+function answer(val){
+  answers[QUESTIONS[qIdx].key] = val;
+  blip();
+  qIdx++;
+  if(qIdx < QUESTIONS.length){ showQuestion(); return; }
+  finishCheckin();
+}
+
+function finishCheckin(){
+  const first = !S.start;
+  const t = todayStr();
+  if(!S.start) S.start = t;
+  if(answers.drink) S.lastDrink = t;
+  if(answers.smoke) S.lastSmoke = t;
+  if(answers.lonely) S.lonelyDays = (S.lonelyDays||0)+1;
+  S.lastCheck = t;
+  save(S);
+
+  let msg = null;
+  if(answers.drink && answers.smoke) msg = RELAPSE_BOTH;
+  else if(answers.drink) msg = RELAPSE_DRINK;
+  else if(answers.smoke) msg = RELAPSE_SMOKE;
+  else if(first) msg = FIRST;
+
+  if(answers.lonely && !answers.drink && !answers.smoke && !first){
+    // clean day but lonely -> go straight to IRON MIND with the brotherhood reply
+    openMind(LONELY_REPLY);
+    return;
+  }
+  renderMain(msg);
+  if(answers.lonely && msg){
+    // after relapse message finishes typing user can hit IRON MIND; hint via level line
+  }
+}
+
+/* ================= RENDER ================= */
+function renderMain(msg){
+  const nd=streakDrink(), ns=streakSmoke();
+  document.getElementById('numDrink').textContent=nd;
+  document.getElementById('numSmoke').textContent=ns;
+  document.getElementById('lv').textContent='LV: '+level(Math.min(nd,ns));
+  const d=new Date();
+  document.getElementById('dateLbl').textContent=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}).toUpperCase();
+  document.getElementById('sndBtn').textContent=sndOn?'SND ON':'SND OFF';
+  scr('main');
+  type(document.getElementById('quote'), msg || quoteOfDay());
+}
+
+function openMind(forcedMsg){
+  scr('mind');
+  const nd=streakDrink(), ns=streakSmoke();
+  document.getElementById('mindStat').textContent=
+    '* STATUS: '+nd+'D SOBER / '+ns+'D SMOKE-FREE. BODY REPAIRING. MIND SHARPENING.';
+  type(document.getElementById('mindTxt'), forcedMsg || MIND[Math.floor(Math.random()*MIND.length)]);
+}
+
+/* ================= EVENTS ================= */
+document.getElementById('optNo').onclick=()=>answer(false);
+document.getElementById('optYes').onclick=()=>answer(true);
+document.querySelectorAll('#checkin .opt').forEach(b=>{
+  b.addEventListener('touchstart',()=>{
+    document.querySelectorAll('#checkin .opt').forEach(x=>x.classList.remove('sel'));
+    b.classList.add('sel');
+  },{passive:true});
+});
+document.getElementById('newQuote').onclick=()=>{
+  quoteIdx=(quoteIdx<0?Math.floor(Math.random()*QUOTES.length):(quoteIdx+1)%QUOTES.length);
+  type(document.getElementById('quote'), QUOTES[quoteIdx]);
+};
+document.getElementById('toMind').onclick=()=>openMind();
+document.getElementById('another').onclick=()=>{
+  type(document.getElementById('mindTxt'), MIND[Math.floor(Math.random()*MIND.length)]);
+};
+document.getElementById('back').onclick=()=>renderMain();
+document.getElementById('sndBtn').onclick=e=>{
+  sndOn=!sndOn; S.snd=sndOn; save(S);
+  e.target.textContent=sndOn?'SND ON':'SND OFF';
+};
+
+/* ================= BOOT ================= */
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+if(S.lastCheck===todayStr()){ renderMain(); } else { qIdx=0; answers={}; showQuestion(); }
+</script>
+</body>
+</html>

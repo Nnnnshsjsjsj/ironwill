@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>IRON WILL</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="IRON WILL">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0b0c; --card:#141416; --line:#26262a;
+    --fg:#f2f2f2; --sub:#8b8b92; --red:#e5202e; --green:#22c55e; --steel:#9aa0a6;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:var(--bg);color:var(--fg);
+    font-family:'Inter',-apple-system,sans-serif;
+    display:flex;flex-direction:column;
+    padding:calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 8px);
+    overflow:hidden;font-size:14px;line-height:1.55;
+    user-select:none;-webkit-user-select:none;
+  }
+  .bebas{font-family:'Bebas Neue',sans-serif;letter-spacing:1px}
+  .screen{display:none;flex:1;flex-direction:column;min-height:0}
+  .screen.on{display:flex}
+  .body{flex:1;display:flex;flex-direction:column;gap:12px;min-height:0;overflow-y:auto;padding-bottom:6px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .label{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--sub);text-transform:uppercase;margin-bottom:6px}
+
+  button{font-family:inherit;cursor:pointer}
+  .btn{
+    display:block;width:100%;padding:14px;border-radius:10px;border:none;
+    font-weight:800;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;
+    background:var(--red);color:#fff;
+  }
+  .btn:active{opacity:.8}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--fg)}
+  .btn.ghost:active{background:var(--card)}
+  .btn.done{background:transparent;border:1px solid var(--green);color:var(--green)}
+  .mini{
+    background:transparent;border:1px solid var(--line);color:var(--sub);
+    border-radius:8px;padding:7px 12px;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
+  }
+  .mini.red{border-color:var(--red);color:var(--red)}
+
+  /* header */
+  .top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .top h1{font-size:30px;line-height:1;font-weight:400}
+  .top .date{font-size:12px;color:var(--sub);font-weight:600;letter-spacing:1px}
+  .top .grow{flex:1}
+
+  /* check-in */
+  #checkin{justify-content:center;gap:26px}
+  #checkin .step{font-size:12px;font-weight:800;letter-spacing:3px;color:var(--sub);text-align:center}
+  #checkin .q{font-size:42px;line-height:1.05;text-align:center;min-height:120px;display:flex;align-items:center;justify-content:center}
+  #checkin .opts{display:flex;flex-direction:column;gap:10px}
+  #checkin .opt{
+    padding:18px;border-radius:12px;border:1px solid var(--line);background:var(--card);
+    color:var(--fg);font-size:16px;font-weight:800;letter-spacing:2px;text-transform:uppercase;width:100%;
+  }
+  #checkin .opt:active{border-color:var(--red);color:var(--red)}
+  #backBtn{align-self:center;visibility:hidden}
+
+  /* HQ */
+  .trackers{display:flex;flex-direction:column;gap:10px}
+  .tcard{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .tcard .num{font-size:52px;line-height:.9;min-width:74px;text-align:center}
+  .tcard .info{flex:1}
+  .tcard .tname{font-size:15px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
+  .tcard .tsub{font-size:11px;color:var(--sub);font-weight:600;margin-top:3px;letter-spacing:.5px}
+  .tcard.alt .num{color:var(--steel)}
+
+  .rankcard{display:flex;flex-direction:column;gap:8px}
+  .rankrow{display:flex;align-items:baseline;justify-content:space-between}
+  .rankname{font-size:26px}
+  .xpnum{font-size:11px;color:var(--sub);font-weight:600;letter-spacing:.5px}
+  .xpbar{height:8px;border-radius:6px;background:#1e1e21;overflow:hidden}
+  .xpbar i{display:block;height:100%;background:var(--red);width:0%}
+
+  .rule{min-height:96px}
+  .rule .qtext{font-size:24px;line-height:1.15;font-family:'Bebas Neue',sans-serif;letter-spacing:1px}
+  .rule .hint{font-size:10px;color:var(--sub);font-weight:600;letter-spacing:1.5px;margin-top:8px;text-transform:uppercase}
+  .msgtext{font-size:14px;line-height:1.6;color:var(--fg)}
+
+  /* tabs */
+  .tabs{display:flex;gap:8px;margin-top:10px}
+  .tabs button{
+    flex:1;background:transparent;border:none;color:var(--sub);
+    font-size:11px;font-weight:800;letter-spacing:2px;padding:12px 2px;text-transform:uppercase;
+    border-top:2px solid transparent;
+  }
+  .tabs button.cur{color:var(--red);border-top-color:var(--red)}
+
+  /* missions */
+  .mission{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer}
+  .mission .cb{width:20px;height:20px;border:2px solid var(--sub);border-radius:6px;flex:0 0 auto}
+  .mission.done{border-color:var(--green)}
+  .mission.done .cb{background:var(--green);border-color:var(--green)}
+  .mission.done .mtxt{color:var(--green)}
+  .mtxt{font-size:13px;font-weight:600;letter-spacing:.3px}
+
+  /* stats */
+  .srow{display:flex;justify-content:space-between;font-size:13px;font-weight:600;padding:9px 2px;border-bottom:1px solid var(--line)}
+  .srow:last-child{border-bottom:none}
+  .srow b{color:var(--red);font-weight:800}
+  .week{display:flex;gap:6px;justify-content:center;padding:4px 0 8px}
+  .week i{width:26px;height:26px;border-radius:6px;background:#1e1e21;display:block}
+  .week i.c{background:var(--green)}
+  .week i.r{background:var(--red)}
+  input[type=number],input[type=text]{
+    background:#101012;border:1px solid var(--line);color:var(--fg);
+    font-family:inherit;font-size:15px;font-weight:600;padding:11px;border-radius:10px;width:100%;
+  }
+  .flabel{font-size:11px;color:var(--sub);font-weight:700;letter-spacing:1px;display:block;margin:8px 0 5px;text-transform:uppercase}
+  .item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line);font-size:13px;font-weight:600}
+  .item:last-child{border-bottom:none}
+  .del{background:none;border:none;color:var(--red);font-weight:800;font-size:12px;letter-spacing:1px}
+  .tl{display:flex;gap:10px;align-items:flex-start;padding:7px 0}
+  .tl .d{min-width:44px;font-family:'Bebas Neue';font-size:18px;color:var(--sub)}
+  .tl.hit .d{color:var(--green)}
+  .tl .t{font-size:12.5px;font-weight:600;color:var(--sub)}
+  .tl.hit .t{color:var(--fg)}
+
+  /* breathing */
+  #breath .stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px}
+  #bcircle{width:130px;height:130px;border-radius:50%;border:3px solid var(--red);transition:transform 3.8s linear}
+  #bphase{font-size:34px}
+  #bcount{font-size:48px;color:var(--red);font-family:'Bebas Neue'}
+  #bnote{font-size:12px;color:var(--sub);font-weight:600;text-align:center;line-height:1.7}
+
+  /* sos */
+  #sos .stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:16px;overflow-y:auto;padding-top:10px}
+  #sosTime{font-size:88px;line-height:1;color:var(--red)}
+  #sosBar{width:100%;max-width:300px;height:8px;border-radius:6px;background:#1e1e21;overflow:hidden}
+  #sosBar i{display:block;height:100%;background:var(--red);width:100%}
+  #sosOrder{font-size:15px;font-weight:600;text-align:center;line-height:1.6;max-width:320px;min-height:48px}
+  .whybox{width:100%;max-width:320px}
+</style>
+</head>
+<body>
+
+<!-- ======== CHECK-IN ======== -->
+<section id="checkin" class="screen">
+  <p class="step" id="stepLbl"></p>
+  <p class="q bebas" id="qTxt"></p>
+  <div class="opts">
+    <button class="opt" id="optA">NO</button>
+    <button class="opt" id="optB">YES</button>
+  </div>
+  <button class="mini" id="backBtn">&larr; BACK</button>
+</section>
+
+<!-- ======== HQ ======== -->
+<section id="main" class="screen">
+  <div class="top">
+    <h1 class="bebas">IRON WILL</h1>
+    <span class="grow"></span>
+    <span class="date" id="dateLbl"></span>
+    <button class="mini" id="redoBtn">REDO</button>
+    <button class="mini red" id="sosBtn">SOS</button>
+  </div>
+  <div class="body">
+    <button class="btn" id="pledgeBtn">PLEDGE: I STAY CLEAN TODAY</button>
+    <div class="trackers" id="trackers"></div>
+    <div class="card rankcard">
+      <div class="rankrow"><span class="rankname bebas" id="rank"></span><span class="xpnum" id="xpNum"></span></div>
+      <div class="xpbar"><i id="xpFill"></i></div>
+    </div>
+    <div class="card rule" id="ruleCard">
+      <div class="label" id="ruleLabel">RULE OF THE DAY</div>
+      <div class="qtext" id="quote"></div>
+      <div class="hint">TAP FOR NEXT RULE</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="cur">HQ</button>
+    <button id="tabMind">MIND</button>
+    <button id="tabOps">OPS</button>
+    <button id="tabStats">STATS</button>
+  </div>
+</section>
+
+<!-- ======== MIND ======== -->
+<section id="mind" class="screen">
+  <div class="top"><h1 class="bebas">MIND</h1><span class="grow"></span><button class="mini red" id="sosBtn2">SOS</button></div>
+  <div class="body">
+    <div class="card"><div class="label" id="mindLabel">STRAIGHT TALK</div><div class="msgtext" id="mindTxt"></div></div>
+    <button class="btn ghost" id="talkBtn">HIT ME AGAIN</button>
+    <button class="btn ghost" id="gameBtn">THE GIRL PROBLEM</button>
+    <button class="btn ghost" id="breathBtn">BREATHING PROTOCOL</button>
+    <button class="btn ghost" id="backupBtn">REAL BACKUP</button>
+    <p class="xpnum" id="mindStat"></p>
+  </div>
+  <div class="tabs">
+    <button id="mindHome">HQ</button>
+    <button class="cur">MIND</button>
+    <button id="mindOps">OPS</button>
+    <button id="mindStats">STATS</button>
+  </div>
+</section>
+
+<!-- ======== OPS ======== -->
+<section id="ops" class="screen">
+  <div class="top"><h1 class="bebas">TODAY'S ORDERS</h1></div>
+  <div class="body">
+    <p class="xpnum">Three orders per day. Each one done = +10 XP. Discipline is built from small boring victories.</p>
+    <div id="mlist" style="display:flex;flex-direction:column;gap:10px"></div>
+    <p class="xpnum" id="opsMsg"></p>
+  </div>
+  <div class="tabs">
+    <button id="opsHome">HQ</button>
+    <button id="opsMind">MIND</button>
+    <button class="cur">OPS</button>
+    <button id="opsStats">STATS</button>
+  </div>
+</section>
+
+<!-- ======== STATS ======== -->
+<section id="stats" class="screen">
+  <div class="top"><h1 class="bebas">WAR REPORT</h1></div>
+  <div class="body">
+    <div class="card">
+      <div class="label">LAST 7 DAYS</div>
+      <div class="week" id="week"></div>
+      <p class="xpnum" style="text-align:center">GREEN = CLEAN &nbsp; RED = FELL</p>
+    </div>
+    <div class="card"><div class="label">NUMBERS</div><div id="srows"></div></div>
+    <div class="card"><div class="label">BODY REPORT — ALCOHOL</div><div id="tlAlc"></div></div>
+    <div class="card"><div class="label">BODY REPORT — CIGARETTES</div><div id="tlSmk"></div></div>
+    <div class="card">
+      <div class="label">MONEY BACK</div>
+      <label class="flabel">Spent per week on alcohol</label>
+      <input id="costAlc" type="number" inputmode="numeric" placeholder="0">
+      <label class="flabel">Spent per week on cigarettes</label>
+      <input id="costCig" type="number" inputmode="numeric" placeholder="0">
+      <button class="btn ghost" id="saveCost" style="margin-top:10px">SAVE</button>
+    </div>
+    <div class="card">
+      <div class="label">CUSTOM TRACKERS</div>
+      <div id="clist"></div>
+      <label class="flabel">Add a vice — action phrase, e.g. "WATCH PORN", "EAT SUGAR"</label>
+      <input id="newVice" type="text" maxlength="24" placeholder="WATCH PORN">
+      <button class="btn ghost" id="addVice" style="margin-top:10px">ADD TRACKER</button>
+    </div>
+    <div class="card">
+      <div class="label">WHY I QUIT — SHOWN DURING SOS</div>
+      <div id="whylist"></div>
+      <input id="newWhy" type="text" maxlength="60" placeholder="My reason...">
+      <button class="btn ghost" id="addWhy" style="margin-top:10px">ADD REASON</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button id="stHome">HQ</button>
+    <button id="stMind">MIND</button>
+    <button id="stOps">OPS</button>
+    <button class="cur">STATS</button>
+  </div>
+</section>
+
+<!-- ======== BREATHING ======== -->
+<section id="breath" class="screen">
+  <div class="top"><h1 class="bebas">BREATHING PROTOCOL</h1></div>
+  <div class="stage">
+    <div id="bcircle"></div>
+    <div id="bphase" class="bebas">READY?</div>
+    <div id="bcount"></div>
+    <div id="bnote">BOX BREATHING 4-4-4-4.<br>USED BY SPECIAL FORCES BEFORE ACTION.<br>KILLS PANIC. RESTORES CONTROL.</div>
+  </div>
+  <div class="tabs" style="gap:10px">
+    <button class="btn ghost" id="bStart" style="flex:1">START</button>
+    <button class="btn ghost" id="bExit" style="flex:1">EXIT</button>
+  </div>
+</section>
+
+<!-- ======== SOS ======== -->
+<section id="sos" class="screen">
+  <div class="top"><h1 class="bebas" style="color:var(--red)">URGE ATTACK</h1></div>
+  <div class="stage">
+    <div id="sosTime" class="bebas">15:00</div>
+    <div id="sosBar"><i></i></div>
+    <div id="sosOrder"></div>
+    <div class="card whybox" id="whyCard" style="display:none">
+      <div class="label">REMEMBER WHY YOU QUIT</div>
+      <div id="sosWhy"></div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="btn" id="sosExit" style="flex:1;background:var(--red)">RETREAT</button>
+  </div>
+</section>
+
+<script>
+/* ================= CONTENT ================= */
+const RULES = [
+  "NO PORN. NO SERIES. NO SNOOZE.\nTHE LIST IS SHORT. THE RESULTS AREN'T.",
+  "НЕ ПЬЮ. НЕ КУРЮ. НЕ НОЮ.\nОСТАЛЬНОЕ — ДЕТАЛИ.",
+  "NO ALCOHOL. NOT AT PARTIES. NOT ON FRIDAYS.\nNOT 'JUST ONE'. NO.",
+  "DELETE THE APPS THAT EAT YOUR HOURS.\nBOREDOM BUILT EVERY GREAT MAN.",
+  "COLD SHOWER BEFORE COMFORT.\nWORK BEFORE ENTERTAINMENT. ALWAYS.",
+  "NO COMPLAINING OUT LOUD.\nIT REHEARSES WEAKNESS.",
+  "ТЕЛЕФОН — ЭТО ИГРОВОЙ АВТОМАТ.\nХВАТИТ ДЁРГАТЬ РЫЧАГ.",
+  "NOBODY GIVES A SHIT ABOUT YOUR EXCUSES.\nGOOD. THAT'S FREEDOM. NOW WORK.",
+  "YOUR COMFORT ZONE IS A COFFIN WITH WIFI.\nCLIMB OUT.",
+  "СЛАБОСТЬ ШЕПЧЕТ 'ОДИН РАЗ МОЖНО'.\nДИСЦИПЛИНА ОТВЕЧАЕТ 'НЕТ'. ВСЕГДА.",
+  "A CIGARETTE IS A SUBSCRIPTION TO WEAKNESS.\nCANCEL IT.",
+  "NO SUGAR RUSH. NO DOPAMINE SNACKS.\nEARN YOUR PLEASURE OR SKIP IT.",
+  "ПОКА ТЫ ДУМАЕШЬ 'С ПОНЕДЕЛЬНИКА' —\nКТО-ТО ПАШЕТ ТРЕТИЙ ГОД. ОН И ЗАБЕРЁТ ВСЁ.",
+  "SOFT CHOICES, HARD LIFE.\nHARD CHOICES, SOFT LIFE. PICK.",
+  "IN BED BY MIDNIGHT. UP BEFORE THE NOISE.\nRECOVERY IS A WEAPON.",
+  "ЗАВИСИМОСТЬ — ЭТО КОГДА РЕШАЕТ ХИМИЯ, А НЕ ТЫ.\nКТО В ДОМЕ ХОЗЯИН?",
+  "DON'T TELL PEOPLE YOUR PLANS.\nSHOW THEM RESULTS.",
+  "THE BOTTLE AND THE PACK ARE TAXES ON MEN WHO GAVE UP.\nYOU'RE DONE PAYING.",
+  "УДОБНЫЙ МУЖЧИНА НЕ НУЖЕН НИКОМУ, ДАЖЕ СЕБЕ.\nБУДЬ РЕЗУЛЬТАТИВНЫМ.",
+  "ONE HOUR OF FOCUSED WORK\nBEATS FIVE HOURS OF BUSY NOISE.",
+  "EVERY CLEAN MORNING IS STOLEN BACK\nFROM THE SYSTEM THAT PROFITS OFF YOUR WEAKNESS.",
+  "СКУЧНО? ОТЛИЧНО. СКУКА — ЭТО ТОПЛИВО.\nИМПЕРИИ ПОСТРОЕНЫ НА СКУЧНЫХ ДНЯХ.",
+  "NO ONE IS COMING TO SAVE YOU.\nGOOD. THE MAN IN THE MIRROR IS BETTER AT IT.",
+  "STANDARDS OVER MOODS.\nTHE PLAN DOESN'T CARE HOW YOU FEEL TODAY."
+];
+
+const MIND = [
+  "Craving? Good. That's the old you begging. It dies in 15 minutes. Hit SOS and outlive it.",
+  "Тяжело? Отлично. Лёгкой бывает только дорога вниз. Ты идёшь вверх. Дыши и шагай.",
+  "Bad day? Warriors have bad days. They just don't make permanent decisions on temporary emotions. Sleep. Train. Repeat.",
+  "The urge is your brain asking for a job. Give it a real one: build, read, work, walk.",
+  "Говорить о проблемах — не слабость. Слабость — заливать их и делать вид, что их нет. Мужик решает проблему, а не прячет её.",
+  "You survived 100% of your worst days. Undefeated record. Don't retire now.",
+  "Один день за раз. Один раунд за раз. Бой выигрывают по раундам. Сегодня — твой раунд.",
+  "Millions of men are in this same trench tonight. Saying no to the glass, the pack, the screen. You're in an army.",
+  "Checking your own head isn't soft. A general inspects his weapons. Your mind is the main one."
+];
+
+const GAME = [
+  "You want a woman. Normal. You're a man. But wanting without acting is just suffering with extra steps. One real conversation today beats a hundred fantasies.",
+  "A woman is a bonus to a full life, not a patch for an empty one. Build the life — the body, the money, the mission. Women notice men who are going somewhere.",
+  "Rejection is not damage. It's a rep. Nobody built approach confidence without eating a hundred 'no's first. Athletes understand reps better than anyone.",
+  "Never orbit. Never beg. Never be the 'always available' guy. Ask directly, take the answer like a man, move. Both outcomes make you stronger.",
+  "Хочешь девушку — выйди туда, где они есть. Зал, кафе, улица, учёба. Ноль подходов = ноль результата. Это математика, а не философия.",
+  "Bitterness repels women faster than poverty. The guy who blames women for being lonely stays lonely. The guy who builds and approaches doesn't. Choose your character.",
+  "Loneliness at your age is fuel. Every great man had a hungry phase. Use it: train harder, earn more, talk to one more girl. The version of you at 25 will thank you.",
+  "Она не обязана тебя выбрать. Ты не обязан её ждать. Свобода в обе стороны — вот что делает тебя спокойным на подходе.",
+  "Standards, not neediness. Know what you want in a woman beyond a pretty face. A man with standards walks different, talks different, gets treated different."
+];
+
+const BACKUP = "Straight talk. This app is a tool, not a medic. If the weight gets beyond heavy — dark thoughts, can't sleep, can't climb out — bringing in a professional is calling in artillery, not surrender. A doctor, a therapist, or one man you trust. The strongest units have the best support lines.";
+
+const LONELY_NOTALK = "You want a woman and you talked to zero today. That math never works. Fantasy costs nothing and pays nothing. Tomorrow's order: one real conversation with one real girl. Rejection is a rep. Log it and move.";
+const LONELY_TALKED = "You want her and you took action today. That's the only way it has ever worked for any man in history. Keep stacking conversations. Numbers and nerve. Respect.";
+const RELAPSE_DRINK_ALONE = "You drank alone. Listen carefully. Drinking with people is weakness. Drinking alone is the enemy winning quietly. Counter resets. One order: tell one person you're quitting. Today. A secret war is a losing war.";
+const RELAPSE_DRINK_SOCIAL = "You drank because people were drinking. So the crowd decided for you. Memorize this line: 'I don't drink.' No explanation. No apology. Watch how fast they respect it. Counter resets. Spine stays.";
+const RELAPSE_SMOKE = "You smoked. The leash pulled and you followed. Fine — now you know the enemy's still alive. Counter resets. Lungs start healing in 20 minutes. Back in the fight.";
+const RELAPSE_MULTI = "More than one counter down today. Rough round. But you showed up and told the truth — that's the spine of a man. Counters reset. Your spine doesn't. Day one. Again. Until it sticks.";
+const CLEAN_DAY = [
+  "Clean day logged. Boring? Good. Empires are built on boring days.",
+  "Another brick in the fortress. Nobody claps for it. That's why most men quit. You're not most men.",
+  "Ещё один чистый день. Система теряет клиента. Продолжай."
+];
+const FIRST = "So you decided to fight. Good. Come back every day. Answer straight. Zero lies. The counters do the rest.";
+
+const MISSIONS = [
+  "One real conversation with a stranger. Girl = double points (honor system).",
+  "Cold shower. 60 seconds minimum. No negotiating.",
+  "Message one brother. A real question, not a meme.",
+  "20-minute walk. Phone stays in the pocket.",
+  "Read 10 pages of a real book.",
+  "No sugar today. Watch your brain beg.",
+  "Clean your space. Full sweep. Your space = your head.",
+  "Write down 3 goals for this month. On paper.",
+  "No social media until sunset.",
+  "Plan tomorrow in 5 lines before bed.",
+  "Drink 2 liters of water. Fuel, not poison.",
+  "10 minutes of silence. No input. Just think.",
+  "Call family. Two minutes is enough.",
+  "In bed before midnight. Recovery is a weapon.",
+  "20 minutes learning a skill that pays.",
+  "100 push-ups before bed. Athlete tax."
+];
+
+const SOS_ORDERS = [
+  "Drop and do 20 push-ups. The urge hates exercise.",
+  "Cold water on your face and neck. Shock the system. Reset.",
+  "Chug a full glass of water. Slowly.",
+  "Step outside or open a window. Breathe like it's your job.",
+  "Text someone: 'how's your day?' Get out of your own head.",
+  "Squeeze your fists 10 seconds. Release. Repeat five times.",
+  "Name 5 things you see, 4 you hear, 3 you touch. Recon your position.",
+  "The urge is a wave. It peaks. It dies. You just have to outlive it. You're doing it."
+];
+
+const MS = [3,7,14,30,60,90,180,365];
+const ALC_TL = [[1,"Blood sugar stabilizing"],[3,"Sleep getting deeper"],[7,"Skin rehydrating, brain fog lifting"],[14,"Liver fat dropping"],[30,"Blood pressure down, calmer baseline"],[90,"Liver largely recovered"],[365,"Major disease risk cut hard"]];
+const SMK_TL = [[1,"CO out of blood, oxygen normal"],[2,"Nicotine out, taste and smell returning"],[3,"Breathing easier"],[14,"Circulation improving"],[30,"Lung function up ~10%"],[90,"Cough and wheeze fading"],[365,"Heart attack risk halved"]];
+
+/* ================= STATE ================= */
+const KEY='ironwill.v1';
+const todayStr=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+const dateOffset=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+const load=()=>{try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return{}}};
+const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
+let S=load();
+S.log=S.log||{}; S.md=S.md||{}; S.xp=S.xp||0;
+S.custom=S.custom||[]; S.lastFail=S.lastFail||{}; S.bestC=S.bestC||{}; S.why=S.why||[];
+
+function daysBetween(a,b){const d1=new Date(a+'T00:00:00'),d2=new Date(b+'T00:00:00');return Math.max(0,Math.round((d2-d1)/86400000));}
+const streakDrink=()=>(!S.lastDrink&&!S.start)?0:daysBetween(S.lastDrink||S.start,todayStr());
+const streakSmoke=()=>(!S.lastSmoke&&!S.start)?0:daysBetween(S.lastSmoke||S.start,todayStr());
+const streakC=id=>{const c=S.custom.find(x=>x.id===id);if(!c)return 0;return daysBetween(S.lastFail[id]||c.added||S.start||todayStr(),todayStr());};
+const nextMs=n=>{for(const m of MS)if(n<m)return m;return null;};
+
+const RANKS=[[0,'RECRUIT'],[100,'FIGHTER'],[250,'SOLDIER'],[500,'WARRIOR'],[1000,'COMMANDER'],[2000,'WARLORD'],[4000,'KING'],[8000,'ABSOLUTE UNIT']];
+function rankInfo(xp){
+  let cur=RANKS[0],next=null;
+  for(let i=0;i<RANKS.length;i++){ if(xp>=RANKS[i][0]) cur=RANKS[i]; else {next=RANKS[i];break;} }
+  const lo=cur[0],hi=next?next[0]:cur[0]+1;
+  const pct=next?Math.min(100,Math.round((xp-lo)/(hi-lo)*100)):100;
+  return {name:cur[1],pct,next:next?next[1]:null,need:next?hi-xp:0};
+}
+
+const scr=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');};
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+/* ================= CHECK-IN ================= */
+const YN=[{l:'NO',v:false},{l:'YES',v:true}];
+let FLOW=[], answers={}, hist=[], flowPos=-1;
+
+function buildFlow(){
+  FLOW=[
+    {key:'drink', text:'DID YOU DRINK TODAY?', options:YN},
+    {key:'drinkCtx', text:'ALONE, OR WITH PEOPLE?', options:[{l:'WITH PEOPLE',v:'social'},{l:'ALONE',v:'alone'}], cond:a=>a.drink===true},
+    {key:'smoke', text:'DID YOU SMOKE TODAY?', options:YN},
+  ];
+  S.custom.forEach(c=>{
+    FLOW.push({key:'c_'+c.id, text:'DID YOU '+esc(c.name)+' TODAY?', options:YN});
+  });
+  FLOW.push({key:'lonely', text:'DID YOU FEEL LONELY TODAY?', options:YN});
+  FLOW.push({key:'talked', text:'DID YOU TALK TO ANY GIRL TODAY?', options:YN, cond:a=>a.lonely===true});
+}
+function activeSteps(){return FLOW.filter(s=>!s.cond||s.cond(answers));}
+function nextStep(from){
+  for(let i=from+1;i<FLOW.length;i++){
+    const s=FLOW[i];
+    if(!s.cond||s.cond(answers)) return i;
+  }
+  return -1;
+}
+function showStep(i){
+  flowPos=i;
+  const s=FLOW[i];
+  const act=activeSteps();
+  document.getElementById('stepLbl').textContent='CHECK '+(act.indexOf(s)+1)+' / '+act.length;
+  document.getElementById('qTxt').textContent=s.text;
+  document.getElementById('optA').textContent=s.options[0].l;
+  document.getElementById('optB').textContent=s.options[1].l;
+  document.getElementById('backBtn').style.visibility=hist.length?'visible':'hidden';
+  scr('checkin');
+}
+function startCheckin(){buildFlow();answers={};hist=[];showStep(nextStep(-1));}
+function pick(idx){
+  const s=FLOW[flowPos];
+  answers[s.key]=s.options[idx].v;
+  hist.push(flowPos);
+  const n=nextStep(flowPos);
+  if(n>=0){showStep(n);return;}
+  finishCheckin();
+}
+document.getElementById('optA').onclick=()=>pick(0);
+document.getElementById('optB').onclick=()=>pick(1);
+document.getElementById('backBtn').onclick=()=>{
+  if(!hist.length)return;
+  const prev=hist.pop();
+  FLOW.forEach((s,i)=>{if(i>=prev)delete answers[s.key];});
+  showStep(prev);
+};
+
+function finishCheckin(){
+  const t=todayStr();
+  const first=!S.start;
+  S.snap={date:t,lastDrink:S.lastDrink||null,lastSmoke:S.lastSmoke||null,lastFail:JSON.parse(JSON.stringify(S.lastFail)),xpBefore:S.xp,logBefore:S.log[t]||null};
+  if(!S.start)S.start=t;
+  const failedC=[];
+  if(answers.drink)S.lastDrink=t;
+  if(answers.smoke)S.lastSmoke=t;
+  S.custom.forEach(c=>{
+    if(answers['c_'+c.id]){S.lastFail[c.id]=t;failedC.push(c.name);}
+  });
+  S.log[t]={drink:!!answers.drink,smoke:!!answers.smoke,ctx:answers.drinkCtx||null,lonely:!!answers.lonely,talked:answers.talked===true,fails:failedC};
+  let gain=10;
+  if(!answers.drink)gain+=5;
+  if(!answers.smoke)gain+=5;
+  S.custom.forEach(c=>{if(!answers['c_'+c.id])gain+=5;});
+  S.xp+=gain;S.snap.xpGained=gain;
+  S.lastCheck=t;save();
+
+  const brokenCount=(answers.drink?1:0)+(answers.smoke?1:0)+failedC.length;
+  let msg=null;
+  if(brokenCount>1)msg=RELAPSE_MULTI;
+  else if(answers.drink)msg=(answers.drinkCtx==='alone')?RELAPSE_DRINK_ALONE:RELAPSE_DRINK_SOCIAL;
+  else if(answers.smoke)msg=RELAPSE_SMOKE;
+  else if(failedC.length===1)msg='You broke: '+failedC[0]+'. The counter resets, the war doesn\'t. Figure out the trigger, remove it, go again. Day one.';
+  else if(first)msg=FIRST;
+  else msg=CLEAN_DAY[Math.floor(Math.random()*CLEAN_DAY.length)];
+
+  if(answers.lonely&&brokenCount===0){
+    openMind(answers.talked?LONELY_TALKED:LONELY_NOTALK,'THE GIRL PROBLEM');
+    return;
+  }
+  renderMain(msg);
+}
+
+/* ================= REDO ================= */
+document.getElementById('redoBtn').onclick=()=>{
+  if(!(S.snap&&S.snap.date===todayStr()&&S.lastCheck===todayStr()))return;
+  S.lastDrink=S.snap.lastDrink||undefined;
+  S.lastSmoke=S.snap.lastSmoke||undefined;
+  S.lastFail=S.snap.lastFail||{};
+  S.xp=S.snap.xpBefore;
+  if(S.snap.logBefore)S.log[todayStr()]=S.snap.logBefore;else delete S.log[todayStr()];
+  delete S.lastCheck;save();
+  startCheckin();
+};
+
+/* ================= HQ ================= */
+function ruleOfDay(){const d=new Date();const seed=d.getFullYear()*372+(d.getMonth()+1)*31+d.getDate();return RULES[seed%RULES.length];}
+let ruleIdx=-1;
+
+function trackerCard(name,days,best,alt){
+  const nm=nextMs(days);
+  return '<div class="tcard'+(alt?' alt':'')+'">'+
+    '<div class="num bebas">'+days+'</div>'+
+    '<div class="info"><div class="tname">'+esc(name)+'</div>'+
+    '<div class="tsub">DAYS CLEAN · BEST '+best+'D'+(nm?(' · NEXT TARGET '+nm+'D'):' · MAX TIER')+'</div></div></div>';
+}
+
+function renderMain(msg){
+  const nd=streakDrink(),ns=streakSmoke();
+  if(nd>(S.bestDrink||0)){S.bestDrink=nd;}
+  if(ns>(S.bestSmoke||0)){S.bestSmoke=ns;}
+  S.custom.forEach(c=>{const s=streakC(c.id);if(s>(S.bestC[c.id]||0))S.bestC[c.id]=s;});
+  save();
+  let html=trackerCard('NO ALCOHOL',nd,S.bestDrink||nd,false)+trackerCard('NO CIGARETTES',ns,S.bestSmoke||ns,true);
+  S.custom.forEach(c=>{html+=trackerCard('NO '+c.name.replace(/^WATCH |^EAT |^USE |^DO /,''),streakC(c.id),S.bestC[c.id]||0,true);});
+  document.getElementById('trackers').innerHTML=html;
+  const r=rankInfo(S.xp);
+  document.getElementById('rank').textContent=r.name;
+  document.getElementById('xpFill').style.width=r.pct+'%';
+  document.getElementById('xpNum').textContent=r.next?(S.xp+' XP · '+r.need+' TO '+r.next):(S.xp+' XP · MAX RANK');
+  const d=new Date();
+  document.getElementById('dateLbl').textContent=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}).toUpperCase();
+  document.getElementById('redoBtn').style.display=(S.snap&&S.snap.date===todayStr()&&S.lastCheck===todayStr())?'':'none';
+  const pb=document.getElementById('pledgeBtn');
+  if(S.pledge===todayStr()){pb.textContent='PLEDGED TODAY ✓';pb.className='btn done';}
+  else{pb.textContent='PLEDGE: I STAY CLEAN TODAY (+5 XP)';pb.className='btn';}
+  document.getElementById('ruleLabel').textContent=msg?'DEBRIEF':'RULE OF THE DAY';
+  const q=document.getElementById('quote');
+  q.textContent=msg||ruleOfDay();
+  q.style.fontFamily=msg?"'Inter',sans-serif":"'Bebas Neue',sans-serif";
+  q.style.fontSize=msg?'14px':'24px';
+  scr('main');
+}
+document.getElementById('pledgeBtn').onclick=()=>{
+  if(S.pledge===todayStr())return;
+  S.pledge=todayStr();S.xp+=5;save();renderMain();
+};
+document.getElementById('ruleCard').onclick=()=>{
+  ruleIdx=(ruleIdx<0?Math.floor(Math.random()*RULES.length):(ruleIdx+1)%RULES.length);
+  document.getElementById('ruleLabel').textContent='RULE OF THE DAY';
+  const q=document.getElementById('quote');
+  q.style.fontFamily="'Bebas Neue',sans-serif";q.style.fontSize='24px';
+  q.textContent=RULES[ruleIdx];
+};
+
+/* ================= MIND ================= */
+function openMind(forced,label){
+  scr('mind');
+  const nd=streakDrink(),ns=streakSmoke();
+  document.getElementById('mindStat').textContent='STATUS: '+nd+'D SOBER · '+ns+'D SMOKE-FREE · BODY REPAIRING · MIND SHARPENING';
+  document.getElementById('mindLabel').textContent=label||'STRAIGHT TALK';
+  document.getElementById('mindTxt').textContent=forced||MIND[Math.floor(Math.random()*MIND.length)];
+}
+document.getElementById('talkBtn').onclick=()=>openMind();
+document.getElementById('gameBtn').onclick=()=>openMind(GAME[Math.floor(Math.random()*GAME.length)],'THE GIRL PROBLEM');
+document.getElementById('backupBtn').onclick=()=>openMind(BACKUP,'REAL BACKUP');
+
+/* ================= OPS ================= */
+function todaysMissions(){
+  const d=new Date();const seed=d.getFullYear()*372+(d.getMonth()+1)*31+d.getDate();
+  const idx=[seed%MISSIONS.length,(seed*7+3)%MISSIONS.length,(seed*13+5)%MISSIONS.length];
+  while(idx[1]===idx[0])idx[1]=(idx[1]+1)%MISSIONS.length;
+  while(idx[2]===idx[0]||idx[2]===idx[1])idx[2]=(idx[2]+1)%MISSIONS.length;
+  return idx;
+}
+function renderOps(){
+  const t=todayStr();
+  const done=S.md[t]||[];
+  const list=document.getElementById('mlist');
+  list.innerHTML='';
+  todaysMissions().forEach((mi,slot)=>{
+    const div=document.createElement('div');
+    div.className='mission'+(done.includes(slot)?' done':'');
+    div.innerHTML='<span class="cb"></span><span class="mtxt">'+MISSIONS[mi]+'</span>';
+    div.onclick=()=>{
+      let arr=S.md[t]||[];
+      if(arr.includes(slot)){arr=arr.filter(x=>x!==slot);S.xp=Math.max(0,S.xp-10);}
+      else{arr.push(slot);S.xp+=10;}
+      S.md[t]=arr;save();renderOps();
+    };
+    list.appendChild(div);
+  });
+  const n=(S.md[t]||[]).length;
+  document.getElementById('opsMsg').textContent=n===3?'ALL ORDERS EXECUTED. DANGEROUS MAN DETECTED. +30 XP TOTAL.':'EXECUTED: '+n+' / 3';
+  scr('ops');
+}
+
+/* ================= STATS ================= */
+function renderTimeline(elId,tl,days){
+  document.getElementById(elId).innerHTML=tl.map(([d,t])=>
+    '<div class="tl'+(days>=d?' hit':'')+'"><span class="d">'+(days>=d?'✓ ':'')+'D'+d+'</span><span class="t">'+t+'</span></div>'
+  ).join('');
+}
+function renderStats(){
+  const wk=document.getElementById('week');wk.innerHTML='';
+  for(let i=6;i>=0;i--){
+    const ds=dateOffset(-i);const e=S.log[ds];
+    const sq=document.createElement('i');
+    if(e){sq.className=(e.drink||e.smoke||(e.fails&&e.fails.length))?'r':'c';}
+    wk.appendChild(sq);
+  }
+  const nd=streakDrink(),ns=streakSmoke();
+  const entries=Object.values(S.log);
+  const costA=+S.costAlc||0,costC=+S.costCig||0;
+  const saved=Math.round(costA/7*nd)+Math.round(costC/7*ns);
+  const rows=[
+    ['CURRENT SOBER STREAK',nd+' D'],
+    ['BEST SOBER STREAK',(S.bestDrink||nd)+' D'],
+    ['CURRENT SMOKE-FREE',ns+' D'],
+    ['BEST SMOKE-FREE',(S.bestSmoke||ns)+' D'],
+    ...S.custom.map(c=>['NO '+c.name,streakC(c.id)+' D']),
+    ['CHECK-INS TOTAL',entries.length],
+    ['TOTAL XP',S.xp],
+    ['MONEY BACK',saved]
+  ];
+  document.getElementById('srows').innerHTML=rows.map(r=>'<div class="srow"><span>'+esc(String(r[0]))+'</span><b>'+r[1]+'</b></div>').join('');
+  renderTimeline('tlAlc',ALC_TL,nd);
+  renderTimeline('tlSmk',SMK_TL,ns);
+  document.getElementById('costAlc').value=S.costAlc||'';
+  document.getElementById('costCig').value=S.costCig||'';
+  // custom trackers list
+  document.getElementById('clist').innerHTML=S.custom.map(c=>
+    '<div class="item"><span>'+esc(c.name)+'</span><button class="del" data-id="'+c.id+'">REMOVE</button></div>'
+  ).join('')||'<p class="xpnum">No custom trackers yet.</p>';
+  document.querySelectorAll('#clist .del').forEach(b=>{
+    b.onclick=()=>{
+      S.custom=S.custom.filter(c=>c.id!==b.dataset.id);
+      delete S.lastFail[b.dataset.id];delete S.bestC[b.dataset.id];
+      save();renderStats();
+    };
+  });
+  // why list
+  document.getElementById('whylist').innerHTML=S.why.map((w,i)=>
+    '<div class="item"><span>'+esc(w)+'</span><button class="del" data-i="'+i+'">X</button></div>'
+  ).join('')||'<p class="xpnum">Write your reasons. The SOS screen will remind you.</p>';
+  document.querySelectorAll('#whylist .del').forEach(b=>{
+    b.onclick=()=>{S.why.splice(+b.dataset.i,1);save();renderStats();};
+  });
+  scr('stats');
+}
+document.getElementById('saveCost').onclick=()=>{
+  S.costAlc=+document.getElementById('costAlc').value||0;
+  S.costCig=+document.getElementById('costCig').value||0;
+  save();renderStats();
+};
+document.getElementById('addVice').onclick=()=>{
+  const inp=document.getElementById('newVice');
+  const name=inp.value.trim().toUpperCase().slice(0,24);
+  if(!name||S.custom.length>=6)return;
+  S.custom.push({id:'c'+Date.now(),name,added:todayStr()});
+  inp.value='';save();renderStats();
+};
+document.getElementById('addWhy').onclick=()=>{
+  const inp=document.getElementById('newWhy');
+  const w=inp.value.trim().slice(0,60);
+  if(!w||S.why.length>=8)return;
+  S.why.push(w);inp.value='';save();renderStats();
+};
+
+/* ================= BREATHING ================= */
+let bTimer=null,bRun=false;
+const PHASES=[['INHALE','scale(1.45)'],['HOLD','scale(1.45)'],['EXHALE','scale(1)'],['HOLD','scale(1)']];
+function breathStop(){bRun=false;clearTimeout(bTimer);document.getElementById('bphase').textContent='READY?';document.getElementById('bcount').textContent='';document.getElementById('bcircle').style.transform='scale(1)';document.getElementById('bStart').textContent='START';}
+function breathStart(){
+  if(bRun){breathStop();return;}
+  bRun=true;document.getElementById('bStart').textContent='STOP';
+  let phase=0,cycles=0;
+  const step=()=>{
+    if(!bRun)return;
+    const[name,tf]=PHASES[phase];
+    document.getElementById('bphase').textContent=name;
+    document.getElementById('bcircle').style.transform=tf;
+    let c=4;
+    const tick=()=>{
+      if(!bRun)return;
+      document.getElementById('bcount').textContent=c;
+      if(--c>=0){bTimer=setTimeout(tick,1000);}
+      else{
+        phase=(phase+1)%4;
+        if(phase===0){cycles++;document.getElementById('bnote').textContent='CYCLES DONE: '+cycles+'. FOUR IS A FULL SET.';}
+        step();
+      }
+    };
+    tick();
+  };
+  step();
+}
+document.getElementById('bStart').onclick=breathStart;
+document.getElementById('bExit').onclick=()=>{breathStop();openMind();};
+document.getElementById('breathBtn').onclick=()=>{breathStop();scr('breath');};
+
+/* ================= SOS ================= */
+let sosTimer=null,sosLeft=0,sosOrderTimer=null;
+function sosStop(){clearInterval(sosTimer);clearInterval(sosOrderTimer);}
+function sosStart(){
+  sosLeft=15*60;
+  scr('sos');
+  const orderEl=document.getElementById('sosOrder');
+  let oi=Math.floor(Math.random()*SOS_ORDERS.length);
+  orderEl.textContent=SOS_ORDERS[oi];
+  sosOrderTimer=setInterval(()=>{oi=(oi+1)%SOS_ORDERS.length;orderEl.textContent=SOS_ORDERS[oi];},60000);
+  const wc=document.getElementById('whyCard');
+  if(S.why.length){
+    wc.style.display='';
+    document.getElementById('sosWhy').innerHTML=S.why.map(w=>'<div class="item"><span>'+esc(w)+'</span></div>').join('');
+  }else wc.style.display='none';
+  const upd=()=>{
+    const m=String(Math.floor(sosLeft/60)).padStart(2,'0'),s=String(sosLeft%60).padStart(2,'0');
+    document.getElementById('sosTime').textContent=m+':'+s;
+    document.querySelector('#sosBar i').style.width=(sosLeft/(15*60)*100)+'%';
+    if(sosLeft<=0){
+      sosStop();S.xp+=15;save();
+      renderMain("15 minutes. You outlived it. The urge is dead and you're still standing. +15 XP. That's how wars are won.");
+      return;
+    }
+    sosLeft--;
+  };
+  upd();sosTimer=setInterval(upd,1000);
+}
+document.getElementById('sosBtn').onclick=sosStart;
+document.getElementById('sosBtn2').onclick=sosStart;
+document.getElementById('sosExit').onclick=()=>{sosStop();renderMain("Retreated from SOS mode. The urge isn't dead yet — watch your flanks. Come back if it pushes again.");};
+
+/* ================= NAV ================= */
+document.getElementById('tabMind').onclick=()=>openMind();
+document.getElementById('tabOps').onclick=renderOps;
+document.getElementById('tabStats').onclick=renderStats;
+document.getElementById('mindHome').onclick=()=>renderMain();
+document.getElementById('mindOps').onclick=renderOps;
+document.getElementById('mindStats').onclick=renderStats;
+document.getElementById('opsHome').onclick=()=>renderMain();
+document.getElementById('opsMind').onclick=()=>openMind();
+document.getElementById('opsStats').onclick=renderStats;
+document.getElementById('stHome').onclick=()=>renderMain();
+document.getElementById('stMind').onclick=()=>openMind();
+document.getElementById('stOps').onclick=renderOps;
+
+/* ================= BOOT ================= */
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+if(S.lastCheck===todayStr()){renderMain();}else{startCheckin();}
+</script>
+</body>
+</html>
